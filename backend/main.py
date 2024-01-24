@@ -4,7 +4,8 @@ from db.session import engine, SessionLocal
 from db.base_class import Base
 from db.models import User, Product, ProductsRating
 from passlib.context import CryptContext
-from schemas.models import NewUser, NewProduct, AddRating
+from schemas.models import NewUser, SchemasProduct, AddRating
+from sqlalchemy import select, update, delete, insert
 
 
 def create_tables():
@@ -53,14 +54,13 @@ async def user_by_id(user_id: int):
 
 @app.get("/", status_code=status.HTTP_200_OK, tags=["users"])
 async def users():
-    print(db.query(Product).all())
     return {"msg": {"Users": db.query(User).all()}}
 
 
 @app.patch("/change-user-password", status_code=status.HTTP_200_OK, tags=["users"])
 async def change_password(new_password: str, user_id: int):
     user = db.query(User).filter_by(id=user_id).first()
-    user.password = new_password
+    user.password = get_password_hash(new_password)
     db.commit()
     return {"msg": "Success"}
 
@@ -73,22 +73,37 @@ async def delete_user(user_id: int):
     return {"msg": "Success"}
 
 
-# TODO: make it's working
+
 @app.post("/create-product", status_code=status.HTTP_200_OK, tags=["products"])
-async def create_product(product: NewProduct):
-    new_product = Product(name=product.name, descriptions=product.descriptions)
+async def create_product(product: SchemasProduct):
+    new_product = Product(**product.model_dump())
     db.add(new_product)
     db.commit()
     return {"msg": "Success"}
 
 
 @app.post("/add-rating", status_code=status.HTTP_200_OK, tags=["products"])
-async def change_rating(rating):
-    print(rating)
+async def add_rating(rating: AddRating):
+    db.execute(insert(ProductsRating).values(**rating.model_dump()))
+    db.commit()
     return {"msg": "Success"}
 
 
-@app.get("/products", status_code=status.HTTP_200_OK, tags=["products"])
-async def all_products(_: Request):
-    data = db.query(Product).all()
-    return {"msg": {"Products": data}}
+@app.get("/products/", status_code=status.HTTP_200_OK, tags=["products"])
+async def all_products(_: Request) -> list[SchemasProduct]:
+    data = db.execute(select(Product)).all()
+    return [SchemasProduct(id=x[0].id, name=x[0].name,
+                           descriptions=x[0].descriptions,
+                           price=x[0].price, average_rating=x[0].average_rating) for x in data]
+
+
+@app.get("/get-product-by-id", status_code=status.HTTP_200_OK, tags=["products"])
+async def get_product_by_id(product_id: int):
+    return db.execute(select(Product).where(Product.id == product_id)).scalar()
+
+
+@app.delete("/delete-product", status_code=status.HTTP_200_OK, tags=["products"])
+async def delete_product(product_id: int):
+    product = db.execute(delete(Product).where(Product.id == product_id))
+    db.commit()
+    return {"msg": "Success"}

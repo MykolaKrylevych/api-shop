@@ -4,6 +4,7 @@ from sqlalchemy.ext.declarative import as_declarative, declared_attr, Declarativ
 Base: DeclarativeMeta
 
 
+# make it like in best practice
 @as_declarative()
 class Base:
     id: Any
