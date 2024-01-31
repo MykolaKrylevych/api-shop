@@ -13,7 +13,7 @@ class User(Base):
     password = Column(String(250), nullable=False)
     balance = Column(Numeric(precision=65, scale=8), default=0)
 
-    ratings = relationship("ProductsRating", back_populates="user")
+    ratings = relationship("ProductsRating", back_populates="user", cascade="all, delete-orphan")
 
     def __init__(self, username, password, user_email):
         self.username = username
@@ -29,8 +29,8 @@ class Product(Base):
     name = Column(String(30), nullable=False)
     descriptions = Column(String(160), nullable=False)
     price = Column(Float, nullable=False)
-    # TODO: make by default rating 0 if not exist in table ProductsRating
-    ratings = relationship("ProductsRating", back_populates="product")
+    # TODO: add file path
+    ratings = relationship("ProductsRating", back_populates="product", cascade="all, delete-orphan")
 
     def __init__(self, name, descriptions, price):
         self.name = name

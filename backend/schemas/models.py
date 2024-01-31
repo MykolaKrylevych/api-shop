@@ -8,11 +8,19 @@ class NewUser(BaseModel):
     user_email: EmailStr
 
 
+class GetById(BaseModel):
+    id: int
+
+
+# TODO: add file
 class SchemasProduct(BaseModel):
-    id: Optional[int] = None
     name: str
     descriptions: str
     price: float
+
+
+class SchemasProductResponse(SchemasProduct):
+    id: Optional[int] = None
     average_rating: Optional[float] = None
 
 
