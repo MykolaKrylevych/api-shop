@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat&family=Nosifer&family=Playfair+Display:ital@0;1&display=swap');
+
+.heading_2xl {
+	@apply text-2xl;
+}
+.heading_3xl {
+	@apply text-3xl tracking-wide;
+}
+.heading_4xl {
+	@apply text-4xl tracking-wider;
+}
+.heading {
+	@apply font-medium text-black text-center mb-6 mt-4;
+	font-family: 'Montserrat', serif;
+}
