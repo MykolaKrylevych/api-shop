@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import Optional, List
 
 
 class NewUser(BaseModel):
@@ -8,20 +8,17 @@ class NewUser(BaseModel):
     user_email: EmailStr
 
 
-class GetById(BaseModel):
-    id: int
-
-
 # TODO: add file
 class SchemasProduct(BaseModel):
     name: str
-    descriptions: str
+    description: str
     price: float
 
 
 class SchemasProductResponse(SchemasProduct):
     id: Optional[int] = None
     average_rating: Optional[float] = None
+    path: List[str]
 
 
 class AddRating(BaseModel):

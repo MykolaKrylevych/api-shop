@@ -29,8 +29,9 @@ class Product(Base):
     name = Column(String(30), nullable=False)
     descriptions = Column(String(160), nullable=False)
     price = Column(Float, nullable=False)
-    # TODO: add file path
     ratings = relationship("ProductsRating", back_populates="product", cascade="all, delete-orphan")
+
+    images = relationship("Images", back_populates="product")
 
     def __init__(self, name, descriptions, price):
         self.name = name
@@ -48,8 +49,13 @@ class Product(Base):
         data = session.execute(avg_rating).scalar()
         return data if data is not None else 0
 
+    @property
+    def list_of_img(self):
+        return [files.path for files in self.images]
+
 
 class ProductsRating(Base):
+    # TODO: allow set rating only once for one user
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     product_id = Column(Integer, ForeignKey('product.id'), nullable=False)
@@ -57,3 +63,10 @@ class ProductsRating(Base):
 
     user = relationship("User", back_populates="ratings")
     product = relationship("Product", back_populates="ratings")
+
+
+class Images(Base):
+    id = Column(Integer, primary_key=True)
+    path = Column(String, nullable=False)
+    product_id = Column(Integer, ForeignKey("product.id"), nullable=False)
+    product = relationship("Product", back_populates="images")
