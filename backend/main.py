@@ -4,10 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from db.session import engine, SessionLocal
 from db.base_class import Base
+import aioredis
 
+from security.user_managment import fastapi_users, auth_backend
 from api.users import user
 from api.products import product
 from api.files import images
+# TODO: change it after test
 
 
 def create_tables():
@@ -23,6 +26,17 @@ def start_application():
 app = start_application()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 db = SessionLocal()
+redis = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
+
+
+@app.on_event("startup")
+async def startup():
+    await redis.ping()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await redis.close()
 
 origins = [
     "http://localhost",
@@ -41,17 +55,8 @@ app.add_middleware(
 app.include_router(user.router, prefix="/users", tags=["Users"])
 app.include_router(product.router, prefix="/product", tags=["Products"])
 app.include_router(images.router, prefix="/Image", tags=["Images"])
+app.include_router(fastapi_users.get_auth_router(auth_backend), prefix="/auth/redis", tags=["auth"])
 
-# TODO: add validation, fix bug with file_path
 
-# @app.post("/files/")
-# async def create_file(
-#         file: Annotated[bytes, File()],
-#         fileb: Annotated[UploadFile, File()],
-#         token: Annotated[str, Form()],
-# ):
-#     return {
-#         "file_size": len(file),
-#         "token": token,
-#         "fileb_content_type": fileb.content_type,
-#     }
+
+

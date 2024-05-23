@@ -3,13 +3,15 @@ from db.base_class import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func, select
 from db.session import SessionLocal
+from fastapi_users.db import SQLAlchemyBaseUserTable, SQLAlchemyUserDatabase
+
 # TODO: change Column to mapped_column
 
 
-class User(Base):
+class User(SQLAlchemyBaseUserTable[int], Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(160), unique=True, nullable=False)
-    user_email = Column(String(40), unique=True, nullable=False)
+    email = Column(String(40), unique=True, nullable=False)
     password = Column(String(250), nullable=False)
     balance = Column(Numeric(precision=65, scale=8), default=0)
 
@@ -22,6 +24,10 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(balance={self.balance})>"
+
+
+async def get_user_db():
+    yield SQLAlchemyUserDatabase(UserDB, SessionLocal(), User)
 
 
 class Product(Base):

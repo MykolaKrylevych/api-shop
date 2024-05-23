@@ -2,10 +2,26 @@ from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 
 
-class NewUser(BaseModel):
+from fastapi_users import schemas, IntegerIDMixin, models
+
+
+class UserRead(schemas.BaseUser[models.ID]):
     username: str
-    password: str
-    user_email: EmailStr
+    balance: float
+    # from fastapi_users
+    # id: models.ID
+    # email: EmailStr
+    # is_active: bool = True
+    # is_superuser: bool = False
+    # is_verified: bool = False
+
+
+class UserCreate(schemas.BaseUserCreate):
+    pass
+
+
+class UserUpdate(schemas.BaseUserUpdate):
+    pass
 
 
 # TODO: add file

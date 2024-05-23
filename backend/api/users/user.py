@@ -1,9 +1,9 @@
-from fastapi import APIRouter, status, HTTPException
-from schemas.models import NewUser
+from fastapi import APIRouter, status, HTTPException, Depends
+from schemas.models import UserCreate
 from db.models import User, ProductsRating
 from db.session import SessionLocal
 from passlib.context import CryptContext
-from sqlalchemy import delete
+from sqlalchemy import delete, select, insert, update
 
 # TODO: Add ApiRouter, rolls, basic crud user/seller
 
@@ -23,7 +23,7 @@ def get_password_hash(password):
 
 
 @router.post("/new-user", status_code=status.HTTP_200_OK)
-async def create_user(new_user: NewUser):
+async def create_user(new_user: UserCreate):
     all_data = db.query(User).all()
     for user in all_data:
         if new_user.username == user.username or new_user.user_email == user.username:
@@ -67,3 +67,4 @@ async def delete_user(user_id: int):
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return {"msg": "Success"}
+
