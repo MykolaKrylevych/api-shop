@@ -1,14 +1,15 @@
 from typing import Optional
-import redis.asyncio
-from os import getenv
+from db.session import redis
+from core.config import settings
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, FastAPIUsers, IntegerIDMixin
 from fastapi_users.authentication import AuthenticationBackend, BearerTransport, RedisStrategy
+from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from db.models import User
+from db.session import get_session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import User, get_user_db
 
-
-redis = redis.asyncio.from_url("redis://localhost:6379", decode_responses=True)
 bearer_transport = BearerTransport(tokenUrl="auth/redis/login")
 
 
@@ -23,9 +24,7 @@ auth_backend = AuthenticationBackend(
 )
 
 
-# TODO change to more secure and get it from env
-
-SECRET = getenv("USERMANAGER_SECRET")
+SECRET = settings.USERMANAGER_SECRET
 
 
 class UserManager(IntegerIDMixin, BaseUserManager[User, IntegerIDMixin]):
@@ -44,6 +43,10 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, IntegerIDMixin]):
         self, user: User, token: str, request: Optional[Request] = None
     ):
         print(f"Verification requested for user {user.id}. Verification token: {token}")
+
+
+async def get_user_db(session: AsyncSession = Depends(get_session)):
+    yield SQLAlchemyUserDatabase(User, session)
 
 
 async def get_user_manager(user_db=Depends(get_user_db)):

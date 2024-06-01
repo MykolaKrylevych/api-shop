@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing import Optional, List
 
 
@@ -17,7 +17,7 @@ class UserRead(schemas.BaseUser[models.ID]):
 
 
 class UserCreate(schemas.BaseUserCreate):
-    pass
+    username: str
 
 
 class UserUpdate(schemas.BaseUserUpdate):
@@ -40,4 +40,4 @@ class SchemasProductResponse(SchemasProduct):
 class AddRating(BaseModel):
     user_id: int
     product_id: int
-    rating: int = Field(..., ge=1, lt=6)
+    rating: int = Field(..., ge=0, lt=6)

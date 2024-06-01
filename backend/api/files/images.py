@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, status
-from db.session import SessionLocal
+from db.session import async_session
 from sqlalchemy import insert
 from db.models import Images, Product
 import os
@@ -10,7 +10,7 @@ from uuid import uuid4
 # TODO: add file checker, images crud route, validation(file size)
 
 router = APIRouter()
-db = SessionLocal()
+db = async_session()
 
 
 @router.post("/upload-file", status_code=status.HTTP_200_OK)

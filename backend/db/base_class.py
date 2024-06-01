@@ -1,10 +1,8 @@
 from typing import Any
-from sqlalchemy.ext.declarative import as_declarative, declared_attr, DeclarativeMeta
-
-Base: DeclarativeMeta
+from sqlalchemy.ext.declarative import as_declarative, declared_attr
 
 
-# make it like in best practice
+# TODO: make it like in best practice
 @as_declarative()
 class Base:
     id: Any

@@ -2,9 +2,9 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
-from db.session import engine, SessionLocal
+from db.session import engine, async_session, redis
 from db.base_class import Base
-import aioredis
+
 
 from security.user_managment import fastapi_users, auth_backend
 from api.users import user
@@ -13,30 +13,15 @@ from api.files import images
 # TODO: change it after test
 
 
-def create_tables():
-    Base.metadata.create_all(bind=engine)
+async def create_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 
-def start_application():
-    start_app: FastAPI = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION)
-    create_tables()
-    return start_app
-
-
-app = start_application()
+app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION)
 app.mount("/static", StaticFiles(directory="static"), name="static")
-db = SessionLocal()
-redis = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
+db = async_session()
 
-
-@app.on_event("startup")
-async def startup():
-    await redis.ping()
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    await redis.close()
 
 origins = [
     "http://localhost",
@@ -58,5 +43,12 @@ app.include_router(images.router, prefix="/Image", tags=["Images"])
 app.include_router(fastapi_users.get_auth_router(auth_backend), prefix="/auth/redis", tags=["auth"])
 
 
+@app.on_event("startup")
+async def startup():
+    await create_tables()
+    await redis.ping()
 
 
+@app.on_event("shutdown")
+async def shutdown():
+    await redis.close()
