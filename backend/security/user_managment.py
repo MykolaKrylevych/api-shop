@@ -2,16 +2,18 @@ from typing import Optional
 from db.session import redis
 from core.config import settings
 from fastapi import Depends, Request
-from fastapi_users import BaseUserManager, FastAPIUsers, IntegerIDMixin
-from fastapi_users.authentication import AuthenticationBackend, BearerTransport, RedisStrategy
-from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from fastapi_users import BaseUserManager, FastAPIUsers, IntegerIDMixin, models
+from fastapi_users.authentication import AuthenticationBackend, BearerTransport, RedisStrategy, JWTStrategy
+from db.session import get_user_db
 from db.models import User
-from db.session import get_session
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
-bearer_transport = BearerTransport(tokenUrl="auth/redis/login")
+bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
+# bearer_transport = BearerTransport(tokenUrl="auth/redis/login")
 
+
+# def get_jwt_strategy() -> JWTStrategy:
+#     return JWTStrategy(secret=SECRET, lifetime_seconds=3600)
 
 def get_redis_strategy() -> RedisStrategy:
     return RedisStrategy(redis, lifetime_seconds=3600)
@@ -22,6 +24,14 @@ auth_backend = AuthenticationBackend(
     transport=bearer_transport,
     get_strategy=get_redis_strategy,
 )
+
+
+#
+# auth_backend = AuthenticationBackend(
+#     name="jwt",
+#     transport=bearer_transport,
+#     get_strategy=get_jwt_strategy,
+# )
 
 
 SECRET = settings.USERMANAGER_SECRET
@@ -45,16 +55,10 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, IntegerIDMixin]):
         print(f"Verification requested for user {user.id}. Verification token: {token}")
 
 
-async def get_user_db(session: AsyncSession = Depends(get_session)):
-    yield SQLAlchemyUserDatabase(User, session)
-
-
 async def get_user_manager(user_db=Depends(get_user_db)):
     yield UserManager(user_db)
-
 
 fastapi_users = FastAPIUsers[User, IntegerIDMixin](
     get_user_manager,
     [auth_backend],
     )
-

@@ -5,7 +5,7 @@ from typing import Optional, List
 from fastapi_users import schemas, IntegerIDMixin, models
 
 
-class UserRead(schemas.BaseUser[models.ID]):
+class UserRead(schemas.BaseUser[int]):
     username: str
     balance: float
     # from fastapi_users

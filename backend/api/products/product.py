@@ -1,41 +1,25 @@
-from fastapi import APIRouter, status, HTTPException, Request, Depends
-from sqlalchemy import select, delete, insert
+from fastapi import APIRouter, status, HTTPException, Depends
 from schemas.models import SchemasProduct, SchemasProductResponse, AddRating
-from db.models import User, Product, ProductsRating, Images
 from db.session import async_session
 from ..services.product import ProductCrud
+from security.user_managment import fastapi_users
 
 # TODO: add category, base crud, validation, fix pydantic schemas, do normal response
 
+ADMIN = fastapi_users.current_user(superuser=True)
 router = APIRouter()
 db = async_session()
 
 
-# @router.post("/create-product", status_code=status.HTTP_200_OK)
-# async def create_product(product: SchemasProduct):
-#     new_product = Product(**product.model_dump())
-#
-#     db.add(new_product)
-#     await db.commit()
-#     return {"msg": "Success"}
 @router.post("", status_code=status.HTTP_200_OK)
-async def create_product(data: SchemasProduct, crud: ProductCrud = Depends(ProductCrud)):
+async def create_product(data: SchemasProduct, crud: ProductCrud = Depends(ProductCrud), superuser=Depends(ADMIN)):
     result = await crud.create(data)
     await crud.session.commit()
     return {"msg": f"Success ID:{result.id}"}
 
 
-# @router.post("/add-rating", status_code=status.HTTP_200_OK)
-# async def add_rating(rating: AddRating):
-#     user = db.get(User, rating.user_id)
-#     product = db.get(Product, rating.product_id)
-#     if user is None or product is None:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User or product not found")
-#     db.execute(insert(ProductsRating).values(**rating.model_dump()))
-#     db.commit()
-#     return {"msg": "Success"}
 @router.post("/add-rating")
-async def add_rating(data: AddRating, crud: ProductCrud = Depends(ProductCrud)):
+async def add_rating(data: AddRating, crud: ProductCrud = Depends(ProductCrud), superuser=Depends(ADMIN)):
     result = await crud.create_rating(data)
     return result
 
@@ -50,7 +34,8 @@ async def add_rating(data: AddRating, crud: ProductCrud = Depends(ProductCrud)):
 
 # TODO fix args in case negative value
 @router.get("", status_code=status.HTTP_200_OK)
-async def all_products(offset: int = 10, limit: int = 10, crud: ProductCrud = Depends(ProductCrud)):
+async def all_products(offset: int = 10, limit: int = 10, crud: ProductCrud = Depends(ProductCrud),
+                       superuser=Depends(ADMIN)):
     data = await crud.get_all(offset=offset, limit=limit)
     return data
 
@@ -66,7 +51,7 @@ async def all_products(offset: int = 10, limit: int = 10, crud: ProductCrud = De
 
 
 @router.get("/{product_id}", status_code=status.HTTP_200_OK)
-async def get_product_by_id(product_id: int, crud: ProductCrud = Depends(ProductCrud)):
+async def get_product_by_id(product_id: int, crud: ProductCrud = Depends(ProductCrud), superuser=Depends(ADMIN)):
     data = await crud.get_one(product_id)
     return data
 
@@ -92,6 +77,6 @@ async def get_product_by_id(product_id: int, crud: ProductCrud = Depends(Product
 #     return {"msg": "Success"}
 
 @router.delete("/{product_id}")
-async def delete_product(product_id: int, crud: ProductCrud = Depends(ProductCrud)):
+async def delete_product(product_id: int, crud: ProductCrud = Depends(ProductCrud), superuser=Depends(ADMIN)):
     result = await crud.delete(product_id)
     return result
