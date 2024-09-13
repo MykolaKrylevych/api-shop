@@ -2,8 +2,8 @@ from typing import Optional
 from db.session import redis
 from core.config import settings
 from fastapi import Depends, Request
-from fastapi_users import BaseUserManager, FastAPIUsers, IntegerIDMixin, models
-from fastapi_users.authentication import AuthenticationBackend, BearerTransport, RedisStrategy, JWTStrategy
+from fastapi_users import BaseUserManager, FastAPIUsers, IntegerIDMixin
+from fastapi_users.authentication import AuthenticationBackend, BearerTransport, RedisStrategy
 from db.session import get_user_db
 from db.models import User
 

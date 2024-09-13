@@ -5,7 +5,7 @@ load_dotenv(find_dotenv())
 
 
 class Settings:
-    PROJECT_NAME: str = "CRUD"
+    PROJECT_NAME: str = "BETA"
     PROJECT_VERSION: str = "1.0.0"
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
     POSTGRES_USER: str = os.getenv("POSTGRES_USER")

@@ -7,7 +7,7 @@ from db.models import User
 from typing import AsyncGenerator
 
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
-print("Database URL is ", SQLALCHEMY_DATABASE_URL)
+# print(f"Database URL is {str(SQLALCHEMY_DATABASE_URL)}")
 engine = create_async_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
 
 async_session = async_sessionmaker(engine, class_=AsyncSession, autocommit=False, autoflush=False,

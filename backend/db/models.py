@@ -1,9 +1,11 @@
-from sqlalchemy import Column, Integer, String, Numeric, CheckConstraint, ForeignKey, Float
+import sqlalchemy
+from sqlalchemy import Column, Integer, String, Numeric, CheckConstraint, ForeignKey, Float, DateTime, Enum
 from db.base_class import Base
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.orm import relationship
 # from sqlalchemy.sql import func, select
 from fastapi_users.db import SQLAlchemyBaseUserTable
-
+# enums model for db
+from .enums import Status
 
 # TODO: change Column to mapped_column
 
@@ -34,13 +36,17 @@ class Product(Base):
     name = Column(String(30), nullable=False)
     description = Column(String(160), nullable=False)
     price = Column(Float, nullable=False)
+    amount = Column(Float, nullable=False)
+    created_at = Column(DateTime, server_default=sqlalchemy.func.now())
+    status = Column(Enum(Status), server_default=Status.available.name)
     ratings = relationship("ProductsRating", back_populates="product", cascade="all, delete-orphan")
     images = relationship("Images", back_populates="product", cascade="all, delete-orphan")
 
-    def __init__(self, name, description, price):
+    def __init__(self, name, description, price, amount):
         self.name = name
         self.description = description
         self.price = price
+        self.amount = amount
 
     def __repr__(self):
         return f"<Product(name={self.name})>"
@@ -54,8 +60,8 @@ class Product(Base):
     #     return data if data is not None else 0
 
     # @property
-    # def list_of_img(self):
-    #     return [files.path for files in self.images]
+    # def all_images(self):
+    #     return [files.photo_url for files in self.images]
 
 
 class ProductsRating(Base):
@@ -71,6 +77,13 @@ class ProductsRating(Base):
 
 class Images(Base):
     id = Column(Integer, primary_key=True, index=True)
-    path = Column(String, nullable=False, unique=True)
+    photo_url = Column(String, nullable=False, unique=True)
     product_id = Column(Integer, ForeignKey("product.id"), nullable=False)
     product = relationship("Product", back_populates="images")
+
+    def __init__(self, photo_url, product_id):
+        self.photo_url = photo_url
+        self.product_id = product_id
+
+    def __repr__(self):
+        return f"<Image(url={self.photo_url})>"
