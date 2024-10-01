@@ -1,8 +1,9 @@
 from typing import List
-
+from enum import Enum
 from ..base import BaseProduct
 from pydantic import BaseModel, Field, constr, field_validator
 import base64
+from db.enums import Status
 
 
 class PhotoModel(BaseModel):
@@ -28,4 +29,7 @@ class AddRating(BaseModel):
     rating: int = Field(..., ge=0, lt=6)
 
 
-# photos = ["1":{"photo_url":"21324tyhgfbdw", "extensions":"png"},"2":{"photo_url":"w1ewd", "extensions":"png"}]
+# TODO fix status in db is status.available.name fix validation
+class PatchProduct(BaseModel):
+    status: Status = Status.available
+    product_id: int

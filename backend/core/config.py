@@ -1,5 +1,9 @@
 import os
 from dotenv import load_dotenv, find_dotenv
+from pydantic import BaseModel
+from logging.config import dictConfig
+import logging
+
 
 load_dotenv(find_dotenv())
 
@@ -18,4 +22,49 @@ class Settings:
     USERMANAGER_SECRET: str = os.getenv("USERMANAGER_SECRET")
 
 
+class LogConfig(BaseModel):
+    """Logging configuration to be set for the server"""
+
+    LOGGER_NAME: str = "Candyshop"
+    LOG_FORMAT: str = "%(levelprefix)s | %(asctime)s | %(message)s"
+    LOG_LEVEL: str = "DEBUG"
+
+    version: int = 1
+    disable_existing_loggers: bool = False
+    formatters: dict = {
+        "console": {
+            "()": "uvicorn.logging.DefaultFormatter",
+            "fmt": LOG_FORMAT,
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+            "use_colors": True,
+        },
+        "file": {
+            "()": "uvicorn.logging.DefaultFormatter",
+            "fmt": LOG_FORMAT,
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+            "use_colors": False
+        }
+    }
+    handlers: dict = {
+        "console": {
+            "formatter": "console",
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stderr",
+        },
+        "file": {
+            "formatter": "file",
+            "class": "logging.FileHandler",
+            "filename": "app.log",
+
+        },
+    }
+    loggers: dict = {
+        LOGGER_NAME: {"handlers": ["console", "file"], "level": LOG_LEVEL},
+    }
+
+
 settings = Settings()
+
+dictConfig(LogConfig().dict())
+
+logger = logging.getLogger("Candyshop")

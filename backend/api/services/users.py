@@ -2,7 +2,7 @@ from sqlalchemy import insert, select, update, delete, or_
 from api.services.base import BaseCrud
 from db.models import User
 from schemas.models import UserCreate
-
+from fastapi import HTTPException, status
 
 class UserCrud(BaseCrud):
     async def create(self, user):
@@ -37,3 +37,11 @@ class UserCrud(BaseCrud):
         stmt = (select(User).filter(or_(User.username == user.username, User.email == user.email)))
         user = await self.session.execute(stmt)
         return user.scalar()
+
+    async def user_exist(self, user_id):
+        stmt = (select(User).where(User.id == user_id))
+        user = await self.session.execute(stmt)
+        user_orm = user.scalar()
+        if user_orm:
+            return True
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User with this id was not found")

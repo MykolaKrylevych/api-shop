@@ -4,6 +4,7 @@ from typing import List
 import os
 import uuid
 from constants import TEMP_FILE_FOLDER
+from core.config import logger
 
 
 def decode_photo(path, encoded_string):
@@ -11,6 +12,7 @@ def decode_photo(path, encoded_string):
         try:
             f.write(base64.b64decode(encoded_string.encode("utf-8")))
         except Exception as ex:
+            logger.error(f"Photo decoding error: {ex}")
             raise HTTPException(400, "Invalid photo encoding")
 
 

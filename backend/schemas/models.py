@@ -8,6 +8,7 @@ from fastapi_users import schemas
 class UserRead(schemas.BaseUser[int]):
     username: str
     balance: float
+    iban: str
     # from fastapi_users
     # id: models.ID
     # email: EmailStr
@@ -18,6 +19,7 @@ class UserRead(schemas.BaseUser[int]):
 
 class UserCreate(schemas.BaseUserCreate):
     username: str
+    iban: str
 
 
 class UserUpdate(schemas.BaseUserUpdate):

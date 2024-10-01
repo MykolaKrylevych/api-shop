@@ -22,52 +22,25 @@ def get_password_hash(password):
 
 
 # TODO: user create func from fastapi_users
-@router.post("", status_code=status.HTTP_200_OK)
-async def create_user(new_user: UserCreate, crud: UserCrud = Depends(UserCrud)):
-    test = await crud.check_if_user_exist(new_user)
-    if not test:
-        temp = new_user.model_dump()
-        temp["hashed_password"] = get_password_hash(temp.pop("password"))
-        result = await crud.create(temp)
-        return {"msg": f"{result.id}"}
-    else:
-        raise HTTPException(status_code=409, detail="User already exist")
-
-
-@router.get("/{user_id}", status_code=status.HTTP_200_OK)
-async def get_user_by_id(user_id: int, crud: UserCrud = Depends(UserCrud)):
-    result = await crud.get_one(user_id)
-    return result
-
-
-@router.get("", status_code=status.HTTP_200_OK)
-async def get_all(offset: int = 10, limit: int = 10, crud: UserCrud = Depends(UserCrud)):
-    result = await crud.get_all(offset=offset, limit=limit)
-    return result
-
-
-# TODO let it do fastapi_users
-# @router.patch("/change-user-password", status_code=status.HTTP_200_OK)
-# async def change_password(new_password: str, user_id: int):
-#     user = db.query(User).filter_by(id=user_id).first()
-#     user.password = get_password_hash(new_password)
-#     db.commit()
-#     return {"msg": "Success"}
-
-
-# @router.delete("/delete-user", status_code=status.HTTP_200_OK)
-# async def delete_user(user_id: int):
-#     user = db.get(User, user_id)
-#     if user:
-#         for rating in user.ratings:
-#             db.execute(delete(ProductsRating).where(ProductsRating.id == rating.id))
-#             db.commit()
-#         db.delete(user)
-#         db.commit()
+# @router.post("", status_code=status.HTTP_200_OK)
+# async def create_user(new_user: UserCreate, crud: UserCrud = Depends(UserCrud)):
+#     test = await crud.check_if_user_exist(new_user)
+#     if not test:
+#         temp = new_user.model_dump()
+#         temp["hashed_password"] = get_password_hash(temp.pop("password"))
+#         result = await crud.create(temp)
+#         return {"msg": f"{result.id}"}
 #     else:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-#     return {"msg": "Success"}
-# @router.delete("/{user_id}")
-# async def delete_user(user_id: int, crud: UserCrud = Depends(UserCrud)):
-#     result = await crud.delete_user(user_id)
-#     return {"Bye": f"{result}"}
+#         raise HTTPException(status_code=409, detail="User already exist")
+#
+#
+# @router.get("/{user_id}", status_code=status.HTTP_200_OK)
+# async def get_user_by_id(user_id: int, crud: UserCrud = Depends(UserCrud)):
+#     result = await crud.get_one(user_id)
+#     return result
+#
+#
+# @router.get("", status_code=status.HTTP_200_OK)
+# async def get_all(offset: int = 10, limit: int = 10, crud: UserCrud = Depends(UserCrud)):
+#     result = await crud.get_all(offset=offset, limit=limit)
+#     return result

@@ -2,10 +2,11 @@ import sqlalchemy
 from sqlalchemy import Column, Integer, String, Numeric, CheckConstraint, ForeignKey, Float, DateTime, Enum
 from db.base_class import Base
 from sqlalchemy.orm import relationship
-# from sqlalchemy.sql import func, select
+
 from fastapi_users.db import SQLAlchemyBaseUserTable
 # enums model for db
 from .enums import Status
+
 
 # TODO: change Column to mapped_column
 
@@ -14,6 +15,7 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(160), nullable=False)
     balance = Column(Numeric(precision=65, scale=8), default=0)
+    iban = Column(String, nullable=False)
     # email: Mapped[str] = mapped_column(String(length=320), unique=True, index=True, nullable=False)
     # hashed_password: str
     # is_active: bool
@@ -21,11 +23,14 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     # is_verified: bool
 
     ratings = relationship("ProductsRating", back_populates="user", cascade="all, delete-orphan")
+    cart = relationship("Cart", back_populates="user", cascade="all, delete-orphan")
+    transaction = relationship("Transaction", back_populates="user")
 
-    def __init__(self, username, email, hashed_password):
+    def __init__(self, username, email, hashed_password, iban):
         self.username = username
         self.email = email
         self.hashed_password = hashed_password
+        self.iban = iban
 
     def __repr__(self):
         return f"<User(balance={self.balance})>"
@@ -39,8 +44,12 @@ class Product(Base):
     amount = Column(Float, nullable=False)
     created_at = Column(DateTime, server_default=sqlalchemy.func.now())
     status = Column(Enum(Status), server_default=Status.available.name)
+
     ratings = relationship("ProductsRating", back_populates="product", cascade="all, delete-orphan")
     images = relationship("Images", back_populates="product", cascade="all, delete-orphan")
+    category = relationship("ProductCategory", back_populates="product", cascade="all, delete-orphan")
+    cart = relationship("Cart", back_populates="product", cascade="all, delete-orphan")
+    transaction = relationship("Transaction", back_populates="product")
 
     def __init__(self, name, description, price, amount):
         self.name = name
@@ -51,21 +60,8 @@ class Product(Base):
     def __repr__(self):
         return f"<Product(name={self.name})>"
 
-    # @property
-    # def average_rating(self):
-    #     avg_rating = (
-    #         select(func.avg(ProductsRating.rating)).where(ProductsRating.product_id == self.id))
-    #     session = async_session()
-    #     data = session.execute(avg_rating).scalar()
-    #     return data if data is not None else 0
-
-    # @property
-    # def all_images(self):
-    #     return [files.photo_url for files in self.images]
-
 
 class ProductsRating(Base):
-    # TODO: allow set rating only once for one user
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     product_id = Column(Integer, ForeignKey('product.id'), nullable=False)
@@ -87,3 +83,51 @@ class Images(Base):
 
     def __repr__(self):
         return f"<Image(url={self.photo_url})>"
+
+
+# TODO upgrade tables
+class Category(Base):
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True, index=True)
+
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return f"<Category(name={self.name})>"
+
+
+class ProductCategory(Base):
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey("product.id"), nullable=False)
+    category_id = Column(Integer, ForeignKey("category.id"), nullable=False)
+    product = relationship("Product", back_populates="category")
+
+    def __init__(self, product_id: int, category_id: int):
+        self.product_id = product_id
+        self.category_id = category_id
+
+
+class Cart(Base):
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey("product.id"), index=True)
+    amount = Column(Integer, nullable=False)
+
+    user = relationship("User", back_populates="cart", lazy='select')
+    product = relationship("Product", back_populates="cart")
+
+    def __int__(self, product_id, user_id, amount):
+        self.product_id = product_id
+        self.user_id = user_id
+        self.amount = amount
+
+
+class Transaction(Base):
+    id = Column(Integer, primary_key=True, index=True)
+    iban = Column(String, nullable=False)
+
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    user = relationship("User", back_populates="transaction")
+    product_id = Column(Integer, ForeignKey("product.id"), nullable=False)
+    product = relationship("Product", back_populates="transaction")

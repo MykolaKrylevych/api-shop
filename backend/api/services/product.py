@@ -1,7 +1,7 @@
 from sqlalchemy import insert, select, update, delete, join, func
 from api.services.base import BaseCrud
-from schemas.request.product import SchemasProductIn
-from db.models import Product, ProductsRating, Images
+from schemas.request.product import SchemasProductIn, PatchProduct
+from db.models import Product, ProductsRating, Images, ProductCategory
 from schemas.request.product import AddRating
 
 from utils.helper import image_saver
@@ -60,21 +60,24 @@ class ProductCrud(BaseCrud):
         stmt_product = (delete(Product).where(Product.id == product_id).returning(Product))
         stmt_img = (delete(Images).where(Images.product_id == product_id).returning(Images))
         stmt_rating = (delete(ProductsRating).where(ProductsRating.product_id == product_id).returning(ProductsRating))
-        # result = await self.session.execute(stmt)
-        # await self.session.commit()
+        stmt_category = (
+            delete(ProductCategory).where(ProductCategory.product_id == product_id).returning(ProductCategory))
 
         # result_orm = result.scalar()
         async with self.session as conn:
             try:
                 stmt_img_result = await conn.execute(stmt_img)
                 stmt_rating_result = await conn.execute(stmt_rating)
+                stmt_category_result = await conn.execute(stmt_category)
                 stmt_product_result = await conn.execute(stmt_product)
                 await conn.commit()
             except Exception as error:
                 await conn.rollback()
                 raise error
 
-        result = [stmt_product_result.scalar(), stmt_img_result.scalar(), stmt_rating_result.scalar()]
+        result = [stmt_product_result.scalar(), stmt_img_result.scalar(), stmt_rating_result.scalar(),
+                  stmt_category_result.scalar()
+                  ]
 
         return result
 
@@ -99,4 +102,24 @@ class ProductCrud(BaseCrud):
         result_orm = result.scalar()
         if result_orm:
             return True
-        return False
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product with this id was not found")
+
+    async def rating_exists(self, product_id: int, user_id):
+        stmt = (
+            select(ProductsRating).where(ProductsRating.product_id == product_id,
+                                         ProductsRating.user_id == user_id))
+        result = await self.session.execute(stmt)
+        return result.scalar()
+
+    async def change_product_status(self, data: PatchProduct):
+        # TODO finalize
+        stmt = (
+            update(Product)
+            .where(Product.id == data.product_id)
+            .values(status=data.status.name)
+            .returning(Product)
+        )
+        result = await self.session.execute(stmt)
+        await self.session.commit()
+        result_orm = result.scalar()
+        return result_orm
