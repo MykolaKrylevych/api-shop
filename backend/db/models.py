@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 
 from fastapi_users.db import SQLAlchemyBaseUserTable
 # enums model for db
-from .enums import Status
+from .enums import Status, TransactionStatus
 
 
 # TODO: change Column to mapped_column
@@ -25,6 +25,7 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     ratings = relationship("ProductsRating", back_populates="user", cascade="all, delete-orphan")
     cart = relationship("Cart", back_populates="user", cascade="all, delete-orphan")
     transaction = relationship("Transaction", back_populates="user")
+    order = relationship("Order", back_populates="user")
 
     def __init__(self, username, email, hashed_password, iban):
         self.username = username
@@ -41,7 +42,7 @@ class Product(Base):
     name = Column(String(30), nullable=False)
     description = Column(String(160), nullable=False)
     price = Column(Float, nullable=False)
-    amount = Column(Float, nullable=False)
+    amount = Column(Integer, nullable=False)
     created_at = Column(DateTime, server_default=sqlalchemy.func.now())
     status = Column(Enum(Status), server_default=Status.available.name)
 
@@ -50,6 +51,7 @@ class Product(Base):
     category = relationship("ProductCategory", back_populates="product", cascade="all, delete-orphan")
     cart = relationship("Cart", back_populates="product", cascade="all, delete-orphan")
     transaction = relationship("Transaction", back_populates="product")
+    order = relationship("Order", back_populates="product")
 
     def __init__(self, name, description, price, amount):
         self.name = name
@@ -126,8 +128,24 @@ class Cart(Base):
 class Transaction(Base):
     id = Column(Integer, primary_key=True, index=True)
     iban = Column(String, nullable=False)
-
+    created_at = Column(DateTime, server_default=sqlalchemy.func.now())
+    money_amount = Column(Float, CheckConstraint('money_amount > 0 '), nullable=False)
+    status = Column(Enum(TransactionStatus), server_default=TransactionStatus.pending.name)
+    provider_transaction_id = Column(Integer, nullable=False)
+    # product.price
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     user = relationship("User", back_populates="transaction")
-    product_id = Column(Integer, ForeignKey("product.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("product.id"))
     product = relationship("Product", back_populates="transaction")
+
+
+class Order(Base):
+    id = Column(Integer, primary_key=True, index=True)
+    address = Column(String, nullable=False)
+    amount = Column(Integer, CheckConstraint('amount > 0 '))
+    price = Column(Float, CheckConstraint('amount > 0 '))
+    user_id = Column(Integer, ForeignKey("user.id"))
+    product_id = Column(Integer, ForeignKey("product.id"))
+
+    product = relationship("Product", back_populates="order")
+    user = relationship("User", back_populates="order")

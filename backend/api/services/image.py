@@ -11,3 +11,5 @@ class ImageCrud(BaseCrud):
         await self.session.commit()
         result_orm = result.scalar()
         return result_orm
+
+

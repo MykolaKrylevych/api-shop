@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends
 from fastapi.staticfiles import StaticFiles
-# from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from core.config import settings, logger
 
@@ -13,6 +13,7 @@ from security.user_managment import auth_backend, fastapi_users
 from api.products import product
 from api.cart import cart
 from api.category import category
+from api.payment import payment
 
 from schemas.models import UserCreate, UserRead, UserUpdate
 
@@ -32,11 +33,24 @@ app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 db = async_session()
 
+origins = [
+    "*",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 app.include_router(product.router, prefix="/product", tags=["Products"])
 
 app.include_router(cart.router, prefix="/cart", tags=["Cart"])
 app.include_router(category.router, prefix="/category", tags=["Category"])
+app.include_router(payment.router, prefix="/payment", tags=["Payment"])
 
 app.include_router(fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"])
 app.include_router(fastapi_users.get_register_router(UserRead, UserCreate), prefix="/auth", tags=["auth"])
@@ -64,7 +78,6 @@ current_active_user = fastapi_users.current_user(active=True)
 async def log_requests(request: Request, call_next):
     logger.info(f"IP: {request.client.host} Request: {request.method} {request.url}")
     start_time = time.time()
-
     response = await call_next(request)
 
     process_time = time.time() - start_time

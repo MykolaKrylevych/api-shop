@@ -1,7 +1,7 @@
 from .base import BaseCrud
 from ..services.product import ProductCrud
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.session import get_session
+from db.session import get_session, clear_cache
 from db.models import Category, ProductCategory
 from fastapi import Depends, HTTPException, status
 from sqlalchemy import select, delete, insert, update
@@ -76,8 +76,10 @@ class CategoryCrud(BaseCrud):
     async def delete_category(self, category_id):
         await self._obj_exist_id(category_id=category_id)
 
-        stmt = (delete(Category).where(Category.id==category_id).returning(Category))
-        product_category_table_stmt = (delete(ProductCategory).where(ProductCategory.category_id==category_id))
+        await clear_cache(f"category:{category_id}", "category:*", category_id)
+
+        stmt = (delete(Category).where(Category.id == category_id).returning(Category))
+        product_category_table_stmt = (delete(ProductCategory).where(ProductCategory.category_id == category_id))
         async with self.session as conn:
             await conn.execute(product_category_table_stmt)
             result = await conn.execute(stmt)

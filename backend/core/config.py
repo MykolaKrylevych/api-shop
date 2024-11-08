@@ -3,12 +3,15 @@ from dotenv import load_dotenv, find_dotenv
 from pydantic import BaseModel
 from logging.config import dictConfig
 import logging
-
+import stripe
 
 load_dotenv(find_dotenv())
 
 
 class Settings:
+    BASE_URL: str = os.getenv("BASE_URL", "http://127.0.0.1:8000")
+    PAYMENT_WEBHOOK_URL: str = os.getenv("PAYMENT_WEBHOOK_URL", "http://127.0.0.1:8000/payment/webhook")
+    WEBHOOK_SECRET: str = os.getenv("WEBHOOK_SECRET")
     PROJECT_NAME: str = "BETA"
     PROJECT_VERSION: str = "1.0.0"
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
@@ -20,6 +23,7 @@ class Settings:
     DATABASE_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}:{POSTGRES_PORT}/{POSTGRES_DB}"
     STATIC_DIR: str = os.getenv("STATIC_DIR", "static/images")
     USERMANAGER_SECRET: str = os.getenv("USERMANAGER_SECRET")
+    STRIPE_SECRET_KEY: str = os.getenv("STRIPE_SECRET_KEY")
 
 
 class LogConfig(BaseModel):
@@ -68,3 +72,11 @@ settings = Settings()
 dictConfig(LogConfig().dict())
 
 logger = logging.getLogger("Candyshop")
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+# FOR PRODUCTION
+# stripe.WebhookEndpoint.create(
+#     url=settings.PAYMENT_WEBHOOK_URL,
+#     enabled_events=["checkout.session.completed", "checkout.session.async_payment_succeeded",
+#                     "checkout.session.async_payment_failed"]
+# )

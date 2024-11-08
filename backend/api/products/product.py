@@ -10,7 +10,6 @@ from db.session import redis
 
 ADMIN = fastapi_users.current_user(superuser=True)
 router = APIRouter()
-db = async_session()
 
 
 @router.post("", status_code=status.HTTP_200_OK)

@@ -2,9 +2,10 @@ from sqlalchemy import insert, select, update, delete, join, func
 from api.services.base import BaseCrud
 from schemas.request.product import SchemasProductIn, PatchProduct
 from db.models import Product, ProductsRating, Images, ProductCategory
+from db.session import clear_cache
 from schemas.request.product import AddRating
 
-from utils.helper import image_saver
+from utils.helper import image_saver, image_delete
 from fastapi import HTTPException, status
 
 
@@ -32,13 +33,16 @@ class ProductCrud(BaseCrud):
         stmt = (select(Product).offset(offset).limit(limit))
         result = await self.session.execute(stmt)
         result_orm = result.scalars().all()
+
         return result_orm
 
     async def get_one(self, product_id: int):
         stmt = (select(Product).where(Product.id == product_id))
         result = await self.session.execute(stmt)
         result_orm = result.scalar()
-        return result_orm
+        if result_orm:
+            return result_orm
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product with this id was not found")
 
     async def all_images(self, product_id: int):
         stmt = (select(Images.photo_url).where(Images.product_id == product_id))
@@ -63,7 +67,11 @@ class ProductCrud(BaseCrud):
         stmt_category = (
             delete(ProductCategory).where(ProductCategory.product_id == product_id).returning(ProductCategory))
 
-        # result_orm = result.scalar()
+        list_of_img = await self.all_images(product_id)
+        await image_delete(list_of_img)
+
+        await clear_cache(f"product:{product_id}", "products:*", product_id)
+
         async with self.session as conn:
             try:
                 stmt_img_result = await conn.execute(stmt_img)
@@ -76,8 +84,7 @@ class ProductCrud(BaseCrud):
                 raise error
 
         result = [stmt_product_result.scalar(), stmt_img_result.scalar(), stmt_rating_result.scalar(),
-                  stmt_category_result.scalar()
-                  ]
+                  stmt_category_result.scalar()]
 
         return result
 

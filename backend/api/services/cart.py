@@ -6,7 +6,7 @@ from ..services.users import UserCrud
 from fastapi import HTTPException, status, Depends
 from schemas.request.cart import CartIn, CartInPatch
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.session import get_session
+from db.session import get_session, clear_cache
 
 
 class CartCrud(BaseCrud):
@@ -71,6 +71,8 @@ class CartCrud(BaseCrud):
         await self.product_crud.product_exists(product_id=data.product_id)
         cart_obj = await self.obj_exist(user_id=data.user_id, product_id=data.product_id)
 
+        await clear_cache(f"cart:{data.user_id}", "carts:*", data.user_id)
+
         if cart_obj:
             result = await self.increase_amount(data)
             return result
@@ -94,6 +96,7 @@ class CartCrud(BaseCrud):
         return result_serialized
 
     async def delete_product_from_cart(self, user_id: int, product_id: int):
+        await clear_cache(f"cart:{user_id}", "carts:*", user_id)
         stmt = (delete(Cart).where(Cart.user_id == user_id, Cart.product_id == product_id).returning(Cart))
         result = await self.session.execute(stmt)
         await self.session.commit()

@@ -26,3 +26,13 @@ def image_saver(list_of_img: List):
             decode_photo(path, photo)
             list_of_path.append(path)
     return list_of_path
+
+
+async def image_delete(list_of_img: List):
+    if list_of_img:
+        for image in list_of_img:
+            try:
+                os.remove(image)
+            except Exception as ex:
+                logger.error(f"Deleting exception: {ex}")
+    return logger.error("No Image")

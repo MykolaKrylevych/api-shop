@@ -47,6 +47,10 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, IntegerIDMixin]):
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None
     ):
+        data = await request.json()
+        print(data["email"])
+        # should be in future
+        print(f"an email was sent")
         print(f"User {user.id} has forgot their password. Reset token: {token}")
 
     async def on_after_request_verify(

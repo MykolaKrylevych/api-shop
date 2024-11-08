@@ -5,4 +5,4 @@ class BaseProduct(BaseModel):
     name: str
     description: str
     price: float
-    amount: float
+    amount: int

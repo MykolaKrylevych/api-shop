@@ -17,7 +17,7 @@ async def add_product(data: CartIn, crud: CartCrud = Depends(CartCrud), superuse
 
 @router.get("/{user_id}")
 async def get_user_cart(user_id: int, crud=Depends(CartCrud), superuser=Depends(ADMIN)):
-    cache_key = f"cart:user_id{user_id}"
+    cache_key = f"cart:{user_id}"
     cached_data = await redis.get(cache_key)
 
     if cached_data:
