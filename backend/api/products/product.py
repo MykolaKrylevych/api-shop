@@ -5,8 +5,7 @@ from ..services.product import ProductCrud
 from security.user_managment import fastapi_users
 from fastapi.encoders import jsonable_encoder
 import json
-from db.session import redis
-
+from db.session import get_redis, Redis
 
 ADMIN = fastapi_users.current_user(superuser=True)
 router = APIRouter()
@@ -33,6 +32,7 @@ async def add_rating(data: AddRating, crud: ProductCrud = Depends(ProductCrud), 
 @router.get("", status_code=status.HTTP_200_OK)
 async def all_products(offset: int = Query(0, ge=0), limit: int = Query(10, ge=1),
                        crud: ProductCrud = Depends(ProductCrud),
+                       redis: Redis = Depends(get_redis),
                        superuser=Depends(ADMIN)):
     cache_key = f"products:offset:{offset}:limit:{limit}"
 
@@ -53,7 +53,9 @@ async def all_products(offset: int = Query(0, ge=0), limit: int = Query(10, ge=1
 
 
 @router.get("/{product_id}", status_code=status.HTTP_200_OK)
-async def get_product_by_id(product_id: int, crud: ProductCrud = Depends(ProductCrud), superuser=Depends(ADMIN)):
+async def get_product_by_id(product_id: int, crud: ProductCrud = Depends(ProductCrud),
+                            redis: Redis = Depends(get_redis),
+                            superuser=Depends(ADMIN)):
     cache_key = f"product:{product_id}"
     cached_data = await redis.get(cache_key)
     if cached_data:

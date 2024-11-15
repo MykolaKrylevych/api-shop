@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from core.config import settings, logger
 
-from db.session import engine, async_session, redis
+from db.session import engine, async_session, get_redis, Redis
 from db.base_class import Base
 from db.models import User
 
@@ -20,6 +20,7 @@ from schemas.models import UserCreate, UserRead, UserUpdate
 from starlette.requests import Request
 
 import time
+
 
 # TODO: change it after test
 
@@ -45,7 +46,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 app.include_router(product.router, prefix="/product", tags=["Products"])
 
 app.include_router(cart.router, prefix="/cart", tags=["Cart"])
@@ -69,7 +69,6 @@ app.include_router(
     prefix="/users",
     tags=["users"],
 )
-
 
 current_active_user = fastapi_users.current_user(active=True)
 
@@ -99,11 +98,13 @@ async def authenticated_route(user: User = Depends(current_active_user)):
 
 @app.on_event("startup")
 async def startup():
+    redis = get_redis()
     await create_tables()
     await redis.ping()
 
 
 @app.on_event("shutdown")
 async def shutdown():
+    redis: Redis = get_redis()
     await redis.close()
     logger.warning("Server is down")

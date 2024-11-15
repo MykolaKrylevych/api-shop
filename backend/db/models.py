@@ -119,7 +119,7 @@ class Cart(Base):
     user = relationship("User", back_populates="cart", lazy='select')
     product = relationship("Product", back_populates="cart")
 
-    def __int__(self, product_id, user_id, amount):
+    def __init__(self, product_id, user_id, amount):
         self.product_id = product_id
         self.user_id = user_id
         self.amount = amount

@@ -1,5 +1,5 @@
 from typing import Optional
-from db.session import redis
+from db.session import get_redis, Redis
 from core.config import settings
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, FastAPIUsers, IntegerIDMixin
@@ -7,15 +7,16 @@ from fastapi_users.authentication import AuthenticationBackend, BearerTransport,
 from db.session import get_user_db
 from db.models import User
 
-
 bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
+
+
 # bearer_transport = BearerTransport(tokenUrl="auth/redis/login")
 
 
 # def get_jwt_strategy() -> JWTStrategy:
 #     return JWTStrategy(secret=SECRET, lifetime_seconds=3600)
 
-def get_redis_strategy() -> RedisStrategy:
+def get_redis_strategy(redis: Redis = Depends(get_redis)) -> RedisStrategy:
     return RedisStrategy(redis, lifetime_seconds=3600)
 
 
@@ -24,7 +25,6 @@ auth_backend = AuthenticationBackend(
     transport=bearer_transport,
     get_strategy=get_redis_strategy,
 )
-
 
 #
 # auth_backend = AuthenticationBackend(
@@ -45,7 +45,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, IntegerIDMixin]):
         print(f"User {user.id} has registered.")
 
     async def on_after_forgot_password(
-        self, user: User, token: str, request: Optional[Request] = None
+            self, user: User, token: str, request: Optional[Request] = None
     ):
         data = await request.json()
         print(data["email"])
@@ -54,7 +54,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, IntegerIDMixin]):
         print(f"User {user.id} has forgot their password. Reset token: {token}")
 
     async def on_after_request_verify(
-        self, user: User, token: str, request: Optional[Request] = None
+            self, user: User, token: str, request: Optional[Request] = None
     ):
         print(f"Verification requested for user {user.id}. Verification token: {token}")
 
@@ -62,7 +62,8 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, IntegerIDMixin]):
 async def get_user_manager(user_db=Depends(get_user_db)):
     yield UserManager(user_db)
 
+
 fastapi_users = FastAPIUsers[User, IntegerIDMixin](
     get_user_manager,
     [auth_backend],
-    )
+)

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from ..services.cart import CartCrud
 from security.user_managment import fastapi_users
 from schemas.request.cart import CartIn, CartInPatch
-from db.session import redis
+from db.session import get_redis, Redis
 import json
 
 ADMIN = fastapi_users.current_user(superuser=True)
@@ -16,7 +16,8 @@ async def add_product(data: CartIn, crud: CartCrud = Depends(CartCrud), superuse
 
 
 @router.get("/{user_id}")
-async def get_user_cart(user_id: int, crud=Depends(CartCrud), superuser=Depends(ADMIN)):
+async def get_user_cart(user_id: int, crud=Depends(CartCrud), redis: Redis = Depends(get_redis),
+                        superuser=Depends(ADMIN)):
     cache_key = f"cart:{user_id}"
     cached_data = await redis.get(cache_key)
 

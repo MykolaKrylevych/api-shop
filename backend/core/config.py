@@ -14,7 +14,7 @@ class Settings:
     WEBHOOK_SECRET: str = os.getenv("WEBHOOK_SECRET")
     PROJECT_NAME: str = "BETA"
     PROJECT_VERSION: str = "1.0.0"
-    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost")
     POSTGRES_USER: str = os.getenv("POSTGRES_USER")
     POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
     POSTGRES_SERVER: str = os.getenv("POSTGRES_SERVER", "localhost")
